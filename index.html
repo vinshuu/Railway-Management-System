@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Railway Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1f2937;
+  --border:#30363d;--accent:#1a73e8;--accent2:#34a853;
+  --warn:#f9ab00;--danger:#ea4335;--text:#e6edf3;--muted:#8b949e;
+  --radius:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+a{color:inherit;text-decoration:none}
+input,select,textarea{font-family:inherit}
+button{font-family:inherit;cursor:pointer}
+
+/* ── NAV ── */
+#nav{position:sticky;top:0;z-index:200;background:rgba(13,17,23,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;
+  padding:0 1.5rem;height:56px}
+.nav-brand{font-weight:700;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.nav-btn{padding:.35rem .9rem;border-radius:6px;border:none;font-size:.8rem;font-weight:600;transition:.2s all}
+#navHome{background:transparent;color:var(--muted);border:1px solid var(--border)}
+#navHome:hover{color:var(--text);background:var(--surface)}
+
+/* ── VIEWS ── */
+.view{display:none;animation:fadeIn .25s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── HOME ── */
+#viewHome{text-align:center;padding:5rem 1.5rem 3rem;
+  background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(26,115,232,.2) 0%,transparent 70%)}
+.home-title{font-size:clamp(2rem,5vw,3rem);font-weight:700;line-height:1.2;margin-bottom:1rem}
+.home-title span{color:var(--accent)}
+.home-sub{color:var(--muted);max-width:500px;margin:0 auto 2.5rem;line-height:1.7}
+.role-cards{display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.role-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:2rem 2.5rem;cursor:pointer;transition:.25s all;min-width:220px;text-align:center}
+.role-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 32px rgba(26,115,232,.2)}
+.role-card .icon{font-size:2.5rem;margin-bottom:.75rem}
+.role-card h2{font-size:1.05rem;font-weight:600;margin-bottom:.4rem}
+.role-card p{font-size:.82rem;color:var(--muted);line-height:1.5}
+
+/* ── PANELS ── */
+.panel{max-width:1100px;margin:2rem auto;padding:0 1.5rem 3rem}
+.panel-header{margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem}
+.panel-header h1{font-size:1.4rem;font-weight:700}
+.panel-header p{color:var(--muted);font-size:.85rem;margin-top:.2rem}
+
+/* ── GRID ── */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
+.menu-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.25rem;cursor:pointer;transition:.2s all;display:flex;flex-direction:column;align-items:flex-start;gap:.5rem}
+.menu-tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+.menu-tile .tile-icon{font-size:1.6rem}
+.menu-tile .tile-title{font-weight:600;font-size:.92rem}
+.menu-tile .tile-desc{font-size:.78rem;color:var(--muted);line-height:1.5}
+
+/* ── SECTIONS ── */
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.25rem}
+.section-title{font-weight:600;font-size:1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:.35rem .8rem;border-radius:6px;font-size:.8rem;margin-bottom:1.25rem;transition:.2s}
+.back-btn:hover{color:var(--text);border-color:var(--text)}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.85rem}
+.form-group{display:flex;flex-direction:column;gap:.4rem}
+.form-group label{font-size:.78rem;color:var(--muted);font-weight:500}
+.form-group input,.form-group select{background:var(--bg);border:1px solid var(--border);
+  color:var(--text);border-radius:7px;padding:.55rem .75rem;font-size:.88rem;
+  outline:none;transition:.2s border-color}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.form-group select option{background:var(--surface)}
+.form-full{grid-column:1/-1}
+
+/* ── BUTTONS ── */
+.btn{padding:.55rem 1.25rem;border-radius:7px;border:none;font-size:.87rem;font-weight:600;transition:.2s all}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#1557b0;transform:translateY(-1px)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#c62828}
+.btn-success{background:var(--accent2);color:#fff}
+.btn-success:hover{background:#2d7a47}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{color:var(--text);border-color:var(--text)}
+.btn-sm{padding:.35rem .75rem;font-size:.78rem}
+.btn-row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+thead{background:var(--surface2)}
+th,td{padding:.65rem .9rem;text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:500;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+tbody tr{border-top:1px solid var(--border);transition:.15s background}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+.badge{display:inline-block;padding:.2rem .55rem;border-radius:99px;font-size:.7rem;font-weight:600}
+.badge-ok{background:rgba(52,168,83,.15);color:#34a853}
+.badge-cancel{background:rgba(234,67,53,.15);color:#ea4335}
+.badge-warn{background:rgba(249,171,0,.15);color:#f9ab00}
+
+/* ── TICKET CARD ── */
+.ticket-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:.85rem}
+.ticket-card .tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+.ticket-card .pnr{font-size:.75rem;color:var(--muted)}
+.ticket-card .pnr span{color:var(--text);font-weight:600;font-size:.9rem}
+.ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem}
+.tc-field label{font-size:.7rem;color:var(--muted);display:block;margin-bottom:.15rem}
+.tc-field span{font-size:.85rem;font-weight:500}
+
+/* ── STAT CARDS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+.stat-card .val{font-size:1.8rem;font-weight:700;line-height:1}
+.stat-card .lbl{font-size:.75rem;color:var(--muted);margin-top:.3rem}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;display:flex;flex-direction:column;gap:.5rem}
+.toast-msg{background:var(--surface2);border:1px solid var(--border);padding:.7rem 1.1rem;
+  border-radius:8px;font-size:.85rem;animation:slideUp .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:.5rem;max-width:320px}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.toast-ok{border-left:3px solid var(--accent2)}
+.toast-err{border-left:3px solid var(--danger)}
+.toast-info{border-left:3px solid var(--accent)}
+
+/* ── MODAL ── */
+#modalOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;
+  align-items:center;justify-content:center}
+#modalOverlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:1.75rem;max-width:480px;width:95%;animation:fadeIn .2s ease}
+.modal h2{font-size:1.05rem;font-weight:700;margin-bottom:1rem}
+.modal .btn-row{margin-top:1.25rem;justify-content:flex-end}
+
+/* ── LOGIN ── */
+.login-wrap{max-width:380px;margin:4rem auto;padding:0 1.5rem}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem}
+.login-box h1{font-size:1.2rem;font-weight:700;margin-bottom:.35rem}
+.login-box p{color:var(--muted);font-size:.83rem;margin-bottom:1.5rem}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty .ei{font-size:2.5rem;margin-bottom:.75rem}
+.empty p{font-size:.9rem}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:1.25rem 0}
+.text-muted{color:var(--muted)}
+.text-danger{color:var(--danger)}
+.text-success{color:var(--accent2)}
+.info-box{background:rgba(26,115,232,.08);border:1px solid rgba(26,115,232,.2);border-radius:8px;padding:.85rem 1rem;font-size:.83rem;color:#7ab4f5;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-brand">🚂 Railway MS</div>
+  <div class="nav-right">
+    <button class="nav-btn" id="navHome" onclick="showView('home')" style="display:none">⬅ Home</button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL -->
+<div id="modalOverlay">
+  <div class="modal" id="modal">
+    <h2 id="modalTitle"></h2>
+    <div id="modalBody"></div>
+    <div class="btn-row" id="modalBtns"></div>
+  </div>
+</div>
+
+<!-- ════════════════════ VIEWS ════════════════════ -->
+
+<!-- HOME -->
+<div class="view active" id="viewHome">
+  <div style="text-align:center;padding:5rem 1.5rem 3rem;background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(26,115,232,.2) 0%,transparent 70%)">
+    <div style="display:inline-block;padding:.25rem .9rem;border-radius:99px;border:1px solid rgba(26,115,232,.4);background:rgba(26,115,232,.1);font-size:.72rem;font-weight:600;color:#7ab4f5;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1rem">Console-Faithful Web Edition</div>
+    <h1 class="home-title">Railway Management<br><span>System</span></h1>
+    <p class="home-sub">A fully functional web replica of the C++ Railway Management System — book tickets, manage trains, track PNRs, all in your browser.</p>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:2rem">Who are you?</p>
+    <div class="role-cards">
+      <div class="role-card" onclick="showView('admin-login')">
+        <div class="icon">🔐</div>
+        <h2>Admin Panel</h2>
+        <p>Add & manage trains, view all bookings, update fares and schedules.</p>
+      </div>
+      <div class="role-card" onclick="showView('passenger')">
+        <div class="icon">🎫</div>
+        <h2>Passenger Portal</h2>
+        <p>Search trains, book tickets, cancel, check PNR status and more.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div class="view" id="viewAdminLogin">
+  <div class="login-wrap">
+    <div class="login-box">
+      <h1>🔐 Admin Login</h1>
+      <p>Enter the admin password to access the control panel.</p>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>Password</label>
+        <input type="password" id="adminPassInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doAdminLogin()">Login →</button>
+      <p style="margin-top:.85rem;font-size:.75rem;color:var(--muted);text-align:center">Password hint: <code>admin123</code></p>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="view" id="viewAdmin">
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <h1>Admin Panel</h1>
+        <p>Manage trains and view all passenger bookings</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="showView('home')">Logout</button>
+    </div>
+
+    <!-- stats -->
+    <div class="stats" id="adminStats"></div>
+
+    <!-- menu -->
+    <div id="adminMenuSection">
+      <div class="menu-grid">
+        <div class="menu-tile" onclick="showAdminSection('addTrain')">
+          <div class="tile-icon">➕</div>
+          <div class="tile-title">Add Train</div>
+          <div class="tile-desc">Register a new train with route and schedule</div>
+        </div>
+        <div class="menu-tile" onclick="showAdminSection('viewTrains')">
+          <div class="tile-icon">🚂</div>
+          <div class="tile-title">View All Trains</div>
+          <div class="tile-desc">See all active trains and availability</div>
+        </div>
+        <div class="menu-tile" onclick="showAdminSection('viewBookings')">
+          <div class="tile-icon">📋</div>
+          <div class="tile-title">View Bookings</div>
+          <div class="tile-desc">All passenger bookings by train</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD TRAIN -->
+    <div id="adminAddTrain" style="display:none">
+      <button class="back-btn" onclick="showAdminSection(null)">← Back to Menu</button>
+      <div class="section">
+        <div class="section-title">➕ Add New Train</div>
+        <div class="form-grid" id="addTrainForm">
+          <div class="form-group"><label>Train Number</label><input type="number" id="aTNo" placeholder="e.g. 12345"/></div>
+          <div class="form-group"><label>Train Name</label><input type="text" id="aTName" placeholder="e.g. Rajdhani Express"/></div>
+          <div class="form-group"><label>Source</label><input type="text" id="aTSrc" placeholder="e.g. Delhi"/></div>
+          <div class="form-group"><label>Destination</label><input type="text" id="aTDest" placeholder="e.g. Mumbai"/></div>
+          <div class="form-group"><label>Total Seats (max 200)</label><input type="number" id="aTSeats" placeholder="e.g. 100"/></div>
+          <div class="form-group"><label>Fare Per Seat (₹)</label><input type="number" id="aTFare" placeholder="e.g. 1500"/></div>
+          <div class="form-group"><label>Departure Time</label><input type="time" id="aTDep"/></div>
+          <div class="form-group"><label>Arrival Time</label><input type="time" id="aTArr"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doAddTrain()">Add Train</button></div>
+      </div>
+    </div>
+
+    <!-- VIEW TRAINS (ADMIN) -->
+    <div id="adminViewTrains" style="display:none">
+      <button class="back-btn" onclick="showAdminSection(null)">← Back to Menu</button>
+      <div class="section">
+        <div class="section-title">🚂 All Trains</div>
+        <div id="adminTrainsTable"></div>
+      </div>
+    </div>
+
+    <!-- VIEW BOOKINGS -->
+    <div id="adminViewBookings" style="display:none">
+      <button class="back-btn" onclick="showAdminSection(null)">← Back to Menu</button>
+      <div class="section">
+        <div class="section-title">📋 Bookings by Train</div>
+        <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+          <select id="bookingTrainFilter" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:.5rem .75rem;font-size:.85rem;flex:1;min-width:180px"></select>
+          <button class="btn btn-primary btn-sm" onclick="loadBookingsTable()">Filter</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bookingTrainFilter').value='';loadBookingsTable()">All</button>
+        </div>
+        <div id="adminBookingsTable"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PASSENGER PORTAL -->
+<div class="view" id="viewPassenger">
+  <div class="panel">
+    <div class="panel-header">
+      <div><h1>🎫 Passenger Portal</h1><p>Book, cancel, and track your train tickets</p></div>
+    </div>
+    <div id="passengerMenuSection">
+      <div class="menu-grid">
+        <div class="menu-tile" onclick="showPassSection('search')"><div class="tile-icon">🔍</div><div class="tile-title">Search Trains</div><div class="tile-desc">Find trains by source & destination</div></div>
+        <div class="menu-tile" onclick="showPassSection('avail')"><div class="tile-icon">💺</div><div class="tile-title">Seat Availability</div><div class="tile-desc">Check seats on a specific train</div></div>
+        <div class="menu-tile" onclick="showPassSection('book')"><div class="tile-icon">📝</div><div class="tile-title">Book Ticket</div><div class="tile-desc">Reserve your seat on any train</div></div>
+        <div class="menu-tile" onclick="showPassSection('cancel')"><div class="tile-icon">❌</div><div class="tile-title">Cancel Ticket</div><div class="tile-desc">Cancel with 80% refund policy</div></div>
+        <div class="menu-tile" onclick="showPassSection('pnr')"><div class="tile-icon">🔎</div><div class="tile-title">View Ticket (PNR)</div><div class="tile-desc">Look up any ticket by PNR</div></div>
+        <div class="menu-tile" onclick="showPassSection('mytickets')"><div class="tile-icon">🗂️</div><div class="tile-title">My Tickets</div><div class="tile-desc">All tickets by passenger name</div></div>
+        <div class="menu-tile" onclick="showPassSection('fare')"><div class="tile-icon">🧮</div><div class="tile-title">Fare Calculator</div><div class="tile-desc">Calculate total fare for multiple seats</div></div>
+        <div class="menu-tile" onclick="showPassSection('alltrains')"><div class="tile-icon">🗺️</div><div class="tile-title">All Trains</div><div class="tile-desc">Browse all available trains</div></div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div id="passSearch" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">🔍 Search Trains</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Source</label><input type="text" id="srchSrc" placeholder="e.g. Delhi"/></div>
+          <div class="form-group"><label>Destination</label><input type="text" id="srchDest" placeholder="e.g. Mumbai"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doSearch()">Search</button></div>
+        <div id="searchResults" style="margin-top:1.25rem"></div>
+      </div>
+    </div>
+
+    <!-- AVAILABILITY -->
+    <div id="passAvail" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">💺 Check Seat Availability</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Train Number</label><input type="number" id="availTrainNo" placeholder="e.g. 12345"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doAvail()">Check</button></div>
+        <div id="availResult" style="margin-top:1.25rem"></div>
+      </div>
+    </div>
+
+    <!-- BOOK -->
+    <div id="passBook" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">📝 Book Ticket</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Train Number</label><input type="number" id="bkTrainNo" placeholder="e.g. 12345" onchange="prefillBookTrain()"/></div>
+          <div class="form-group"><label>Passenger Name</label><input type="text" id="bkName" placeholder="Full name"/></div>
+          <div class="form-group"><label>Age</label><input type="number" id="bkAge" placeholder="e.g. 28" min="1" max="120"/></div>
+          <div class="form-group"><label>Gender</label>
+            <select id="bkGender"><option value="">Select</option><option value="M">Male</option><option value="F">Female</option><option value="O">Other</option></select>
+          </div>
+          <div class="form-group form-full"><label>ID Proof (Aadhaar / PAN / Passport No.)</label><input type="text" id="bkId" placeholder="e.g. XXXX-XXXX-XXXX"/></div>
+        </div>
+        <div id="bookTrainInfo" style="margin-top:.85rem"></div>
+        <div class="btn-row"><button class="btn btn-success" onclick="doBook()">Confirm Booking</button></div>
+      </div>
+    </div>
+
+    <!-- CANCEL -->
+    <div id="passCancel" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">❌ Cancel Ticket</div>
+        <div class="info-box" style="margin-bottom:1rem">80% of the ticket fare will be refunded upon cancellation.</div>
+        <div class="form-grid">
+          <div class="form-group"><label>PNR Number</label><input type="text" id="cancelPNR" placeholder="e.g. 1712345001"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doLookupCancel()">Look Up Ticket</button></div>
+        <div id="cancelResult" style="margin-top:1.25rem"></div>
+      </div>
+    </div>
+
+    <!-- PNR -->
+    <div id="passPNR" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">🔎 View Ticket by PNR</div>
+        <div class="form-grid">
+          <div class="form-group"><label>PNR Number</label><input type="text" id="pnrInput" placeholder="Enter PNR"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doViewPNR()">Search</button></div>
+        <div id="pnrResult" style="margin-top:1.25rem"></div>
+      </div>
+    </div>
+
+    <!-- MY TICKETS -->
+    <div id="passMyTickets" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">🗂️ My Tickets</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Passenger Name</label><input type="text" id="myTicketsName" placeholder="Enter your full name"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doMyTickets()">Search</button></div>
+        <div id="myTicketsResult" style="margin-top:1.25rem"></div>
+      </div>
+    </div>
+
+    <!-- FARE -->
+    <div id="passFare" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">🧮 Fare Calculator</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Train Number</label><input type="number" id="fareTrainNo" placeholder="e.g. 12345"/></div>
+          <div class="form-group"><label>Number of Seats</label><input type="number" id="fareSeats" placeholder="e.g. 2" min="1"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="doFare()">Calculate</button></div>
+        <div id="fareResult" style="margin-top:1.25rem"></div>
+      </div>
+    </div>
+
+    <!-- ALL TRAINS (PASSENGER) -->
+    <div id="passAllTrains" style="display:none">
+      <button class="back-btn" onclick="showPassSection(null)">← Back</button>
+      <div class="section">
+        <div class="section-title">🗺️ All Available Trains</div>
+        <div id="passTrainsTable"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ JS ════════════════════ -->
+<script>
+// ── DATA LAYER ──────────────────────────────────────────────
+const ADMIN_PASS = 'admin123';
+
+function loadData(){
+  return {
+    trains:  JSON.parse(localStorage.getItem('rms_trains')  || '[]'),
+    tickets: JSON.parse(localStorage.getItem('rms_tickets') || '[]')
+  };
+}
+function saveData(d){
+  localStorage.setItem('rms_trains',  JSON.stringify(d.trains));
+  localStorage.setItem('rms_tickets', JSON.stringify(d.tickets));
+}
+
+// Seed sample data if empty
+(function seed(){
+  const d = loadData();
+  if(d.trains.length) return;
+  d.trains = [
+    {no:12301,name:'Rajdhani Express',src:'Delhi',dest:'Kolkata',total:120,avail:118,fare:1850,dep:'16:55',arr:'10:05',active:true},
+    {no:12951,name:'Mumbai Rajdhani',src:'Delhi',dest:'Mumbai',total:150,avail:147,fare:1650,dep:'17:00',arr:'08:35',active:true},
+    {no:12627,name:'Karnataka Express',src:'Delhi',dest:'Bangalore',total:100,avail:99,fare:2200,dep:'22:30',arr:'06:50',active:true},
+    {no:22691,name:'Rajdhani Exp',src:'Delhi',dest:'Bangalore',total:80,avail:78,fare:2400,dep:'20:15',arr:'11:00',active:true},
+    {no:12001,name:'Shatabdi Express',src:'Mumbai',dest:'Pune',total:200,avail:195,fare:450,dep:'06:25',arr:'08:45',active:true},
+  ];
+  saveData(d);
+})();
+
+// ── PNR ─────────────────────────────────────────────────────
+let _pnrSeq = parseInt(localStorage.getItem('rms_seq')||'0');
+function genPNR(){
+  _pnrSeq++;
+  localStorage.setItem('rms_seq', _pnrSeq);
+  return (Date.now() % 1000000000) * 1000 + (_pnrSeq % 1000);
+}
+
+function today(){
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+// ── VIEW ROUTER ──────────────────────────────────────────────
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const map = {home:'viewHome','admin-login':'viewAdminLogin',admin:'viewAdmin',passenger:'viewPassenger'};
+  const el = document.getElementById(map[id]);
+  if(el) el.classList.add('active');
+  document.getElementById('navHome').style.display = (id==='home') ? 'none' : '';
+  if(id==='admin') refreshAdminStats();
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function toast(msg, type='info'){
+  const t = document.createElement('div');
+  t.className = `toast-msg toast-${type}`;
+  t.textContent = msg;
+  document.getElementById('toast').appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ── MODAL ────────────────────────────────────────────────────
+function openModal(title, body, buttons){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalBtns').innerHTML = buttons;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+document.getElementById('modalOverlay').addEventListener('click', e=>{
+  if(e.target===document.getElementById('modalOverlay')) closeModal();
+});
+
+// ── ADMIN ─────────────────────────────────────────────────────
+function doAdminLogin(){
+  const v = document.getElementById('adminPassInput').value;
+  if(v === ADMIN_PASS){
+    document.getElementById('adminPassInput').value='';
+    showView('admin');
+    showAdminSection(null);
+    toast('Logged in as Admin','ok');
+  } else {
+    toast('Incorrect password!','err');
+  }
+}
+
+function refreshAdminStats(){
+  const d = loadData();
+  const active = d.trains.filter(t=>t.active).length;
+  const total  = d.tickets.length;
+  const conf   = d.tickets.filter(t=>!t.cancelled).length;
+  const canc   = d.tickets.filter(t=>t.cancelled).length;
+  document.getElementById('adminStats').innerHTML =
+    stat(active,'Active Trains','🚂') + stat(total,'Total Bookings','🎫') +
+    stat(conf,'Confirmed','✅') + stat(canc,'Cancelled','❌');
+}
+function stat(v,l,i){return`<div class="stat-card"><div class="val">${i} ${v}</div><div class="lbl">${l}</div></div>`}
+
+function showAdminSection(name){
+  ['addTrain','viewTrains','viewBookings'].forEach(s=>{
+    document.getElementById('admin'+s.charAt(0).toUpperCase()+s.slice(1)).style.display='none';
+  });
+  document.getElementById('adminMenuSection').style.display = name?'none':'block';
+  if(name){
+    const el = {addTrain:'adminAddTrain',viewTrains:'adminViewTrains',viewBookings:'adminViewBookings'}[name];
+    document.getElementById(el).style.display='block';
+    if(name==='viewTrains') renderAdminTrains();
+    if(name==='viewBookings') populateBookingFilter();
+  }
+}
+
+function doAddTrain(){
+  const no    = parseInt(document.getElementById('aTNo').value);
+  const name  = document.getElementById('aTName').value.trim();
+  const src   = document.getElementById('aTSrc').value.trim();
+  const dest  = document.getElementById('aTDest').value.trim();
+  const seats = parseInt(document.getElementById('aTSeats').value);
+  const fare  = parseFloat(document.getElementById('aTFare').value);
+  const dep   = document.getElementById('aTDep').value;
+  const arr   = document.getElementById('aTArr').value;
+  if(!no||!name||!src||!dest||!seats||!fare||!dep||!arr){ toast('Fill all fields','err'); return; }
+  if(isNaN(no)||no<=0){ toast('Invalid train number','err'); return; }
+  if(seats<=0||seats>200){ toast('Seats must be 1-200','err'); return; }
+  if(fare<=0){ toast('Invalid fare','err'); return; }
+  const d = loadData();
+  if(d.trains.find(t=>t.no===no&&t.active)){ toast('Train number already exists','err'); return; }
+  d.trains.push({no,name,src,dest,total:seats,avail:seats,fare,dep,arr,active:true});
+  saveData(d);
+  toast('Train added successfully!','ok');
+  refreshAdminStats();
+  ['aTNo','aTName','aTSrc','aTDest','aTSeats','aTFare','aTDep','aTArr'].forEach(id=>document.getElementById(id).value='');
+}
+
+function renderAdminTrains(){
+  const d = loadData();
+  const trains = d.trains.filter(t=>t.active);
+  if(!trains.length){ document.getElementById('adminTrainsTable').innerHTML=emptyState('No trains found'); return; }
+  let html = `<div class="tbl-wrap"><table><thead><tr>
+    <th>No.</th><th>Name</th><th>Source</th><th>Destination</th><th>Dep.</th><th>Arr.</th><th>Seats</th><th>Avail.</th><th>Fare</th><th>Actions</th>
+  </tr></thead><tbody>`;
+  trains.forEach(t=>{
+    html+=`<tr>
+      <td>${t.no}</td><td>${t.name}</td><td>${t.src}</td><td>${t.dest}</td>
+      <td>${t.dep}</td><td>${t.arr}</td><td>${t.total}</td>
+      <td><span class="badge ${t.avail>0?'badge-ok':'badge-cancel'}">${t.avail}</span></td>
+      <td>₹${t.fare.toFixed(2)}</td>
+      <td style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="editTrain(${t.no})">✏️ Edit</button>
+        <button class="btn btn-sm" style="background:rgba(234,67,53,.15);color:#ea4335" onclick="deleteTrain(${t.no})">🗑️ Delete</button>
+      </td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('adminTrainsTable').innerHTML=html;
+}
+
+function editTrain(no){
+  const d=loadData(); const t=d.trains.find(x=>x.no===no&&x.active);
+  if(!t) return;
+  openModal(`Edit Train #${no}`,
+    `<div class="form-grid" style="gap:.75rem">
+      <div class="form-group"><label>Train Name</label><input id="eN" value="${t.name}"/></div>
+      <div class="form-group"><label>Departure</label><input type="time" id="eD" value="${t.dep}"/></div>
+      <div class="form-group"><label>Arrival</label><input type="time" id="eA" value="${t.arr}"/></div>
+      <div class="form-group"><label>Fare (₹)</label><input type="number" id="eF" value="${t.fare}"/></div>
+      <div class="form-group"><label>Total Seats</label><input type="number" id="eS" value="${t.total}"/></div>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveEditTrain(${no})">Save Changes</button>`
+  );
+}
+function saveEditTrain(no){
+  const d=loadData(); const t=d.trains.find(x=>x.no===no&&x.active); if(!t)return;
+  const ns=parseInt(document.getElementById('eS').value);
+  const booked=t.total-t.avail;
+  if(ns<booked){toast(`Cannot reduce below ${booked} booked seats`,'err');return;}
+  t.name=document.getElementById('eN').value.trim();
+  t.dep=document.getElementById('eD').value;
+  t.arr=document.getElementById('eA').value;
+  t.fare=parseFloat(document.getElementById('eF').value);
+  t.total=ns; t.avail=ns-booked;
+  saveData(d); closeModal(); toast('Train updated!','ok'); renderAdminTrains();
+}
+function deleteTrain(no){
+  const d=loadData();
+  const hasActive=d.tickets.some(t=>t.trainNo===no&&!t.cancelled);
+  if(hasActive){toast('Cannot delete — train has active bookings','err');return;}
+  openModal('Confirm Delete',
+    `<p>Delete train <strong>#${no}</strong>? This cannot be undone.</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-danger" onclick="confirmDelete(${no})">Delete</button>`
+  );
+}
+function confirmDelete(no){
+  const d=loadData();
+  const t=d.trains.find(x=>x.no===no); if(t) t.active=false;
+  saveData(d); closeModal(); toast('Train deleted','ok'); renderAdminTrains(); refreshAdminStats();
+}
+
+function populateBookingFilter(){
+  const d=loadData();
+  const sel=document.getElementById('bookingTrainFilter');
+  sel.innerHTML='<option value="">-- All Trains --</option>';
+  d.trains.filter(t=>t.active).forEach(t=>{
+    sel.innerHTML+=`<option value="${t.no}">${t.no} – ${t.name}</option>`;
+  });
+  loadBookingsTable();
+}
+function loadBookingsTable(){
+  const d=loadData();
+  const filter=document.getElementById('bookingTrainFilter').value;
+  let tickets=filter ? d.tickets.filter(t=>t.trainNo==filter) : d.tickets;
+  if(!tickets.length){document.getElementById('adminBookingsTable').innerHTML=emptyState('No bookings found');return;}
+  let html=`<div class="tbl-wrap"><table><thead><tr>
+    <th>PNR</th><th>Train</th><th>Passenger</th><th>Age</th><th>Gender</th><th>Seat</th><th>Fare</th><th>Date</th><th>Status</th>
+  </tr></thead><tbody>`;
+  tickets.forEach(tk=>{
+    html+=`<tr>
+      <td>${tk.pnr}</td><td>${tk.trainNo} – ${tk.trainName}</td>
+      <td>${tk.pName}</td><td>${tk.age}</td><td>${tk.gender}</td><td>${tk.seat}</td>
+      <td>₹${tk.fare.toFixed(2)}</td><td>${tk.date}</td>
+      <td><span class="badge ${tk.cancelled?'badge-cancel':'badge-ok'}">${tk.cancelled?'CANCELLED':'CONFIRMED'}</span></td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('adminBookingsTable').innerHTML=html;
+}
+
+// ── PASSENGER ─────────────────────────────────────────────────
+const passSections=['search','avail','book','cancel','pnr','mytickets','fare','alltrains'];
+function showPassSection(name){
+  passSections.forEach(s=>document.getElementById('pass'+s.charAt(0).toUpperCase()+s.slice(1)).style.display='none');
+  document.getElementById('passengerMenuSection').style.display=name?'none':'block';
+  if(name){
+    document.getElementById('pass'+name.charAt(0).toUpperCase()+name.slice(1)).style.display='block';
+    if(name==='alltrains') renderPassTrains();
+  }
+}
+
+function doSearch(){
+  const src=document.getElementById('srchSrc').value.trim().toLowerCase();
+  const dest=document.getElementById('srchDest').value.trim().toLowerCase();
+  if(!src||!dest){toast('Enter both source and destination','err');return;}
+  const d=loadData();
+  const r=d.trains.filter(t=>t.active&&t.src.toLowerCase()===src&&t.dest.toLowerCase()===dest);
+  document.getElementById('searchResults').innerHTML=r.length?trainTable(r):emptyState('No trains found for this route');
+}
+
+function doAvail(){
+  const no=parseInt(document.getElementById('availTrainNo').value);
+  const d=loadData(); const t=d.trains.find(x=>x.no===no&&x.active);
+  if(!t){toast('Train not found','err');return;}
+  const booked=t.total-t.avail;
+  document.getElementById('availResult').innerHTML=`
+    <div class="section" style="margin:0">
+      <div style="margin-bottom:.85rem"><strong>${t.name}</strong> <span class="text-muted">#${t.no}</span></div>
+      <div style="margin-bottom:.5rem">🛤️ ${t.src} → ${t.dest} &nbsp;|&nbsp; 🕐 ${t.dep} – ${t.arr} &nbsp;|&nbsp; ₹${t.fare.toFixed(2)}/seat</div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        <div><div class="text-muted" style="font-size:.75rem">Total Seats</div><div style="font-size:1.3rem;font-weight:700">${t.total}</div></div>
+        <div><div class="text-muted" style="font-size:.75rem">Booked</div><div style="font-size:1.3rem;font-weight:700;color:var(--warn)">${booked}</div></div>
+        <div><div class="text-muted" style="font-size:.75rem">Available</div><div style="font-size:1.3rem;font-weight:700;color:${t.avail>0?'var(--accent2)':'var(--danger)'}">${t.avail}</div></div>
+      </div>
+      <div style="margin-top:.85rem">
+        <span class="badge ${t.avail>0?'badge-ok':'badge-cancel'}" style="font-size:.85rem;padding:.3rem .8rem">
+          ${t.avail>0?`✅ SEATS AVAILABLE`:'🚫 FULLY BOOKED'}
+        </span>
+      </div>
+    </div>`;
+}
+
+function prefillBookTrain(){
+  const no=parseInt(document.getElementById('bkTrainNo').value);
+  const d=loadData(); const t=d.trains.find(x=>x.no===no&&x.active);
+  if(!t){ document.getElementById('bookTrainInfo').innerHTML=''; return; }
+  document.getElementById('bookTrainInfo').innerHTML=`
+    <div class="info-box">🚂 <strong>${t.name}</strong> | ${t.src} → ${t.dest} | Dep: ${t.dep} | Arr: ${t.arr} | ₹${t.fare.toFixed(2)}/seat | ${t.avail} seats available</div>`;
+}
+
+function doBook(){
+  const no=parseInt(document.getElementById('bkTrainNo').value);
+  const name=document.getElementById('bkName').value.trim();
+  const age=parseInt(document.getElementById('bkAge').value);
+  const gender=document.getElementById('bkGender').value;
+  const idp=document.getElementById('bkId').value.trim();
+  if(!no||!name||!age||!gender||!idp){toast('Fill all fields','err');return;}
+  if(age<1||age>120){toast('Invalid age','err');return;}
+  const d=loadData(); const ti=d.trains.findIndex(x=>x.no===no&&x.active);
+  if(ti===-1){toast('Train not found','err');return;}
+  if(d.trains[ti].avail<=0){toast('No seats available!','err');return;}
+  if(d.tickets.length>=500){toast('Ticket database full','err');return;}
+
+  const seat=nextSeat(d,no,d.trains[ti].total);
+  const pnr=genPNR();
+  d.tickets.push({pnr,trainNo:no,trainName:d.trains[ti].name,src:d.trains[ti].src,dest:d.trains[ti].dest,
+    pName:name,age,gender,idProof:idp,seat,fare:d.trains[ti].fare,date:today(),cancelled:false});
+  d.trains[ti].avail--;
+  saveData(d);
+
+  openModal('🎉 Booking Confirmed!',
+    `<div class="info-box" style="margin-bottom:.85rem;font-size:1rem;text-align:center">
+      PNR: <strong style="font-size:1.3rem;color:var(--accent2)">${pnr}</strong>
+     </div>
+     ${ticketCard(d.tickets[d.tickets.length-1])}
+     <p style="font-size:.78rem;color:var(--muted);margin-top:.75rem">📌 Save your PNR number for cancellation and status checks.</p>`,
+    `<button class="btn btn-primary" onclick="closeModal()">Done</button>`
+  );
+  ['bkTrainNo','bkName','bkAge','bkId'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('bkGender').value='';
+  document.getElementById('bookTrainInfo').innerHTML='';
+}
+
+function nextSeat(d,no,max){
+  const used=new Set(d.tickets.filter(t=>t.trainNo===no&&!t.cancelled).map(t=>t.seat));
+  for(let s=1;s<=max;s++) if(!used.has(s)) return s;
+  return -1;
+}
+
+function doLookupCancel(){
+  const pnr=document.getElementById('cancelPNR').value.trim();
+  const d=loadData(); const tk=d.tickets.find(t=>String(t.pnr)===pnr);
+  if(!tk){toast('PNR not found','err');return;}
+  if(tk.cancelled){
+    document.getElementById('cancelResult').innerHTML=`<div class="info-box" style="border-left-color:var(--danger);color:#ea4335">This ticket is already cancelled.</div>`;
+    return;
+  }
+  const refund=(tk.fare*0.8).toFixed(2);
+  document.getElementById('cancelResult').innerHTML=
+    ticketCard(tk)+
+    `<div style="margin-top:.85rem;padding:1rem;background:rgba(234,67,53,.08);border:1px solid rgba(234,67,53,.2);border-radius:8px;font-size:.85rem">
+       ⚠️ Cancellation will refund <strong style="color:var(--accent2)">₹${refund}</strong> (80% of ₹${tk.fare.toFixed(2)})
+     </div>
+     <div class="btn-row"><button class="btn btn-danger" onclick="doCancel('${pnr}')">Confirm Cancellation</button></div>`;
+}
+function doCancel(pnr){
+  const d=loadData(); const idx=d.tickets.findIndex(t=>String(t.pnr)===pnr);
+  if(idx===-1){return;}
+  d.tickets[idx].cancelled=true;
+  const ti=d.trains.findIndex(t=>t.no===d.tickets[idx].trainNo);
+  if(ti!==-1) d.trains[ti].avail++;
+  saveData(d);
+  const refund=(d.tickets[idx].fare*0.8).toFixed(2);
+  toast(`Ticket cancelled. Refund: ₹${refund}`,'ok');
+  document.getElementById('cancelResult').innerHTML=`<div class="info-box" style="border-left-color:var(--accent2);color:var(--accent2)">✅ Ticket cancelled successfully. Refund of ₹${refund} will be processed.</div>`;
+  document.getElementById('cancelPNR').value='';
+}
+
+function doViewPNR(){
+  const pnr=document.getElementById('pnrInput').value.trim();
+  const d=loadData(); const tk=d.tickets.find(t=>String(t.pnr)===pnr);
+  document.getElementById('pnrResult').innerHTML=tk?ticketCard(tk):emptyState('No ticket found for this PNR');
+}
+
+function doMyTickets(){
+  const name=document.getElementById('myTicketsName').value.trim().toLowerCase();
+  if(!name){toast('Enter passenger name','err');return;}
+  const d=loadData(); const tks=d.tickets.filter(t=>t.pName.toLowerCase()===name);
+  document.getElementById('myTicketsResult').innerHTML=tks.length?tks.map(ticketCard).join(''):emptyState('No tickets found for this name');
+}
+
+function doFare(){
+  const no=parseInt(document.getElementById('fareTrainNo').value);
+  const seats=parseInt(document.getElementById('fareSeats').value);
+  if(!no||!seats||seats<1){toast('Fill all fields correctly','err');return;}
+  const d=loadData(); const t=d.trains.find(x=>x.no===no&&x.active);
+  if(!t){toast('Train not found','err');return;}
+  document.getElementById('fareResult').innerHTML=`
+    <div class="section" style="margin:0">
+      <div><strong>${t.name}</strong> — <span class="text-muted">#${t.no}</span></div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        <div><div class="text-muted" style="font-size:.75rem">Fare / Seat</div><div style="font-size:1.2rem;font-weight:700">₹${t.fare.toFixed(2)}</div></div>
+        <div><div class="text-muted" style="font-size:.75rem">× Seats</div><div style="font-size:1.2rem;font-weight:700">${seats}</div></div>
+        <div><div class="text-muted" style="font-size:.75rem">Total Fare</div><div style="font-size:1.6rem;font-weight:700;color:var(--accent2)">₹${(t.fare*seats).toFixed(2)}</div></div>
+      </div>
+    </div>`;
+}
+
+function renderPassTrains(){
+  const d=loadData();
+  const trains=d.trains.filter(t=>t.active);
+  document.getElementById('passTrainsTable').innerHTML=trains.length?trainTable(trains):emptyState('No trains available');
+}
+
+// ── SHARED RENDER HELPERS ─────────────────────────────────────
+function trainTable(trains){
+  let html=`<div class="tbl-wrap"><table><thead><tr>
+    <th>No.</th><th>Name</th><th>From</th><th>To</th><th>Dep.</th><th>Arr.</th><th>Available</th><th>Fare</th>
+  </tr></thead><tbody>`;
+  trains.forEach(t=>{
+    html+=`<tr>
+      <td>${t.no}</td><td>${t.name}</td><td>${t.src}</td><td>${t.dest}</td>
+      <td>${t.dep}</td><td>${t.arr}</td>
+      <td><span class="badge ${t.avail>0?'badge-ok':'badge-cancel'}">${t.avail}</span></td>
+      <td>₹${t.fare.toFixed(2)}</td>
+    </tr>`;
+  });
+  return html+'</tbody></table></div>';
+}
+
+function ticketCard(tk){
+  return `<div class="ticket-card">
+    <div class="tc-head">
+      <div class="pnr">PNR <span>${tk.pnr}</span></div>
+      <span class="badge ${tk.cancelled?'badge-cancel':'badge-ok'}">${tk.cancelled?'CANCELLED':'CONFIRMED'}</span>
+    </div>
+    <div class="ticket-grid">
+      <div class="tc-field"><label>Train</label><span>${tk.trainName} (#${tk.trainNo})</span></div>
+      <div class="tc-field"><label>Route</label><span>${tk.src} → ${tk.dest}</span></div>
+      <div class="tc-field"><label>Passenger</label><span>${tk.pName}</span></div>
+      <div class="tc-field"><label>Age / Gender</label><span>${tk.age} / ${tk.gender}</span></div>
+      <div class="tc-field"><label>ID Proof</label><span>${tk.idProof}</span></div>
+      <div class="tc-field"><label>Seat No.</label><span>${tk.seat}</span></div>
+      <div class="tc-field"><label>Fare Paid</label><span>₹${tk.fare.toFixed(2)}</span></div>
+      <div class="tc-field"><label>Booking Date</label><span>${tk.date}</span></div>
+    </div>
+  </div>`;
+}
+
+function emptyState(msg){
+  return `<div class="empty"><div class="ei">🔍</div><p>${msg}</p></div>`;
+}
+</script>
+</body>
+</html>
